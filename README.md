@@ -31,17 +31,10 @@ GAU: Google dork tabanlı URL toplama
 
 Gospider: Derinlemesine link taraması
 
-💻 Kullanım
-bash
-Kopyala
-Düzenle
-./foxss-recon.sh <domain>
-Örnek:
 
-bash
-Kopyala
-Düzenle
+💻 Kullanım ;
 ./foxss-recon.sh hedefsite.com
+
 📂 Çıktılar
 Aktif Subdomainler: recon_<domain>/active_subdomains.txt
 
@@ -52,6 +45,7 @@ XSS Endpointleri: recon_<domain>/xss_endpoints.txt
 Yüksek Riskli XSS Endpointleri: recon_<domain>/xss_high_risk.txt
 
 HTML Raporu: recon_<domain>/xss_report.html
+
 
 📝 Raporlama
 Tarama sonuçları detaylı bir HTML raporu olarak kaydedilir. Raporda:
@@ -70,8 +64,3 @@ bulunmaktadır.
 💡 Not
 Bu araç sadece keşif amaçlıdır ve yasal olmayan kullanım yasaktır. FOXss Recon, yalnızca yetkili ve izinli sistemlerde kullanılmalıdır.
 
-👤 Geliştirici
-Caner Aktaş
-
-
-FOXss Recon ile daha hızlı ve etkili XSS keşif süreçleri oluşturun! 🎯
