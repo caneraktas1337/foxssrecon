@@ -1,66 +1,70 @@
+
+# FOXss Recon - Otomatik XSS Keşif Aracı
+
 FOXss Recon - Otomatik XSS Keşif Aracı
+
 FOXss Recon, web uygulamalarında XSS (Cross-Site Scripting) güvenlik açıklarını keşfetmek amacıyla geliştirilmiş bir otomasyon aracıdır. Bu araç, subdomain keşfi, aktif subdomain doğrulaması ve XSS odaklı URL toplama süreçlerini bir araya getirerek kapsamlı bir tarama sağlar.
 
-🚀 Özellikler
-Otomatik subdomain keşfi (Subfinder ve Amass kullanılarak)
 
-Aktif subdomainlerin doğrulanması (HTTPx ile)
+## 🚀 Özellikler
 
-XSS endpointlerinin toplanması (Urlfinder, Katana, Waybackurls, GAU ve Gospider ile)
+- Otomatik subdomain keşfi (Subfinder ve Amass kullanılarak)
 
-Potansiyel XSS parametrelerinin belirlenmesi ve raporlanması
+- Aktif subdomainlerin doğrulanması (HTTPx ile)
 
-Yüksek riskli XSS endpointlerinin tespiti
+- XSS endpointlerinin toplanması (Urlfinder, Katana, Waybackurls, GAU ve Gospider ile)
 
-Detaylı HTML raporu oluşturma
+- Potansiyel XSS parametrelerinin belirlenmesi ve raporlanması
 
-🛠️ Kullanılan Araçlar
-Subfinder: Subdomain keşfi için
+- Yüksek riskli XSS endpointlerinin tespiti
 
-Amass: Pasif subdomain taraması
+- Detaylı HTML raporu oluşturma
+## 🛠️ Kullanılan Araçlar
 
-HTTPx: Aktif subdomain doğrulaması
+- Subfinder: Subdomain keşfi için
 
-Urlfinder: URL toplama
+- Amass: Pasif subdomain taraması
 
-Katana: Derin URL keşfi
+- HTTPx: Aktif subdomain doğrulaması
 
-Waybackurls: Geçmiş URL arşivi taraması
+- Urlfinder: URL toplama
 
-GAU: Google dork tabanlı URL toplama
+- Katana: Derin URL keşfi
 
-Gospider: Derinlemesine link taraması
+- Waybackurls: Geçmiş URL arşivi taraması
 
+- GAU: Google dork tabanlı URL toplama
 
-💻 Kullanım ;
-./foxss-recon.sh hedefsite.com
+- Gospider: Derinlemesine link taraması
 
-📂 Çıktılar
-Aktif Subdomainler: recon_<domain>/active_subdomains.txt
-
-Tüm URL'ler: recon_<domain>/urls.txt
-
-XSS Endpointleri: recon_<domain>/xss_endpoints.txt
-
-Yüksek Riskli XSS Endpointleri: recon_<domain>/xss_high_risk.txt
-
-HTML Raporu: recon_<domain>/xss_report.html
+  
+## 💻 Kullanım
 
 
-📝 Raporlama
-Tarama sonuçları detaylı bir HTML raporu olarak kaydedilir. Raporda:
+Örnek:
 
-Aktif subdomainler
+```bash 
+  git clone https://github.com/aktascaner/foxssrecon.git
+  cd foxssrecon
+  chmod +x foxssrecon.sh
+  ./foxssrecon.sh hedefsite.com
+```
+    
+## 📂 Çıktılar
 
-Toplanan URL'ler
+- Aktif Subdomainler: recon_<domain>/active_subdomains.txt
 
-XSS risk analizi
+- Tüm URL'ler: recon_<domain>/urls.txt
 
-Yüksek riskli endpointler
+- XSS Endpointleri: recon_<domain>/xss_endpoints.txt
 
-Parametre analizi ve test önerileri
-bulunmaktadır.
+- Yüksek Riskli XSS Endpointleri: recon_<domain>/xss_high_risk.txt
 
-💡 Not
-Bu araç sadece keşif amaçlıdır ve yasal olmayan kullanım yasaktır. FOXss Recon, yalnızca yetkili ve izinli sistemlerde kullanılmalıdır.
+- HTML Raporu: recon_<domain>/xss_report.html
 
+  
+##  💡 Not
+
+- Bu araç sadece keşif amaçlıdır ve yasal olmayan kullanım yasaktır. FOXss Recon, yalnızca yetkili ve izinli sistemlerde kullanılmalıdır.
+
+  
