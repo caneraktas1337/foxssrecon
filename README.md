@@ -42,7 +42,7 @@ FOXss Recon, web uygulamalarında XSS (Cross-Site Scripting) güvenlik açıklar
 Örnek:
 
 ```bash 
-  git clone https://github.com/aktascaner/foxssrecon.git
+  git clone https://github.com/caneraktas1337/foxssrecon.git
   cd foxssrecon
   chmod +x foxssrecon.sh
   ./foxssrecon.sh hedefsite.com
