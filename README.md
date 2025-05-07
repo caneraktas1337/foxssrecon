@@ -1,8 +1,6 @@
 
 # FOXss Recon - Otomatik XSS Keşif Aracı
 
-FOXss Recon - Otomatik XSS Keşif Aracı
-
 FOXss Recon, web uygulamalarında XSS (Cross-Site Scripting) güvenlik açıklarını keşfetmek amacıyla geliştirilmiş bir otomasyon aracıdır. Bu araç, subdomain keşfi, aktif subdomain doğrulaması ve XSS odaklı URL toplama süreçlerini bir araya getirerek kapsamlı bir tarama sağlar.
 
 
