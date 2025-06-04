@@ -28,7 +28,7 @@ ______ _______   __              ______
 ${NC}"
 echo -e "${YELLOW}FOXss Recon${NC}"
 echo -e "${BLUE}Version: 1.0${NC}\n"
-echo -e "${RED}https://www.github.com/aktascaner${NC}\n"
+echo -e "${RED}https://www.github.com/caneraktas1337${NC}\n"
 
 # Kullanım kontrol
 if [ $# -ne 1 ]; then
@@ -334,7 +334,7 @@ EOF
 # Ana akış
 function main {
     echo -e "${BLUE}[*] $TARGET_DOMAIN için XSS odaklı recon başlatılıyor...${NC}"
-    echo -e "${RED}[*] $TARGET_DOMAIN Tarama uzun sürebilir, kahvenizi alıp gelin...${NC}"
+    echo -e "${RED}[*] $TARGET_DOMAIN "Tarama biraz sürebilir, bu arada kahvenizi alıp gelebilirsiniz."${NC}"
     
     discover_subdomains
     identify_active_subdomains
