@@ -65,4 +65,11 @@ FOXss Recon, web uygulamalarında XSS (Cross-Site Scripting) güvenlik açıklar
 
 - Bu araç sadece keşif amaçlıdır ve yasal olmayan kullanım yasaktır. FOXss Recon, yalnızca yetkili ve izinli sistemlerde kullanılmalıdır.
 
+
+## 🛠️ Güncelleme
+
+Gospider çıktı formatı düzeltildi.
+missing_tools array'i tanımlanmamıştı, düzeltildi.
+Bir çok hata düzeltildi.
+
   
