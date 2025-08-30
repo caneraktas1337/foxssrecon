@@ -45,80 +45,143 @@ SUBDOMAINS_FILE="$OUTPUT_DIR/subdomains.txt"
 ACTIVE_SUBDOMAINS_FILE="$OUTPUT_DIR/active_subdomains.txt"
 URLS_FILE="$OUTPUT_DIR/urls.txt"
 XSS_ENDPOINTS="$OUTPUT_DIR/xss_endpoints.txt"
-XSS_PARAMS="$OUTPUT_DIR/xss_parameters.txt"  # Her benzersiz parametre için bir dosya
-XSS_HIGH_RISK="$OUTPUT_DIR/xss_high_risk.txt"  # Yüksek riskli olabilecek parametreler
+XSS_PARAMS="$OUTPUT_DIR/xss_parameters.txt"
+XSS_HIGH_RISK="$OUTPUT_DIR/xss_high_risk.txt"
 
 # Çıktı dizini oluştur
 mkdir -p "$OUTPUT_DIR"
 
-# Araçların varlığını kontrol et
-if [ ${#missing_tools[@]} -ne 0 ]; then
-    echo -e "${RED}[!] Aşağıdaki araçlar bulunamadı:${NC}"
-    for tool in "${missing_tools[@]}"; do
-        echo -e "${YELLOW}    - $tool${NC}"
+# Gerekli araçları kontrol et
+check_tools() {
+    echo -e "${BLUE}[*] Gerekli araçlar kontrol ediliyor...${NC}"
+    
+    local tools=("subfinder" "amass" "httpx" "katana" "waybackurls" "gau" "gospider")
+    local missing_tools=()
+    
+    for tool in "${tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            missing_tools+=("$tool")
+        fi
     done
-    echo -e "${RED}Lütfen eksik araçları yükleyin ve tekrar deneyin.${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}[+] Tüm gerekli araçlar mevcut!${NC}"
+    
+    if [ ${#missing_tools[@]} -ne 0 ]; then
+        echo -e "${RED}[!] Aşağıdaki araçlar bulunamadı:${NC}"
+        for tool in "${missing_tools[@]}"; do
+            echo -e "${YELLOW}    - $tool${NC}"
+        done
+        echo -e "${RED}Lütfen eksik araçları yükleyin ve tekrar deneyin.${NC}"
+        echo -e "${BLUE}Kurulum önerileri:${NC}"
+        echo -e "${YELLOW}    go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest${NC}"
+        echo -e "${YELLOW}    go install -v github.com/OWASP/Amass/v3/...@master${NC}"
+        echo -e "${YELLOW}    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest${NC}"
+        echo -e "${YELLOW}    go install github.com/projectdiscovery/katana/cmd/katana@latest${NC}"
+        echo -e "${YELLOW}    go install github.com/tomnomnom/waybackurls@latest${NC}"
+        echo -e "${YELLOW}    go install github.com/lc/gau/v2/cmd/gau@latest${NC}"
+        echo -e "${YELLOW}    go install github.com/jaeles-project/gospider@latest${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}[+] Tüm gerekli araçlar mevcut!${NC}"
+}
 
 # Subdomain keşfi
 discover_subdomains() {
     echo -e "\n${BLUE}[*] Subdomain keşfi başlatılıyor...${NC}"
     
     echo -e "${YELLOW}[*] Subfinder çalıştırılıyor...${NC}"
-    subfinder -d "$TARGET_DOMAIN" -o "$OUTPUT_DIR/subfinder_subdomains.txt" -silent
+    subfinder -d "$TARGET_DOMAIN" -o "$OUTPUT_DIR/subfinder_subdomains.txt" -silent 2>/dev/null
     
     echo -e "${YELLOW}[*] Amass çalıştırılıyor...${NC}"
-    amass enum -passive -d "$TARGET_DOMAIN" -o "$OUTPUT_DIR/amass_subdomains.txt"
+    amass enum -passive -d "$TARGET_DOMAIN" -o "$OUTPUT_DIR/amass_subdomains.txt" 2>/dev/null
     
     # Sonuçları birleştir ve tekrar edenleri kaldır
-    cat "$OUTPUT_DIR/subfinder_subdomains.txt" "$OUTPUT_DIR/amass_subdomains.txt" | sort -u > "$SUBDOMAINS_FILE"
+    touch "$OUTPUT_DIR/subfinder_subdomains.txt" "$OUTPUT_DIR/amass_subdomains.txt"
+    cat "$OUTPUT_DIR/subfinder_subdomains.txt" "$OUTPUT_DIR/amass_subdomains.txt" 2>/dev/null | grep -v "^$" | sort -u > "$SUBDOMAINS_FILE"
     
-    local count=$(wc -l < "$SUBDOMAINS_FILE")
+    local count=$(wc -l < "$SUBDOMAINS_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}[+] Toplam $count subdomain bulundu.${NC}"
+    
+    if [ "$count" -eq 0 ]; then
+        echo -e "${YELLOW}[!] Subdomain bulunamadı. Ana domain ile devam ediliyor...${NC}"
+        echo "$TARGET_DOMAIN" > "$SUBDOMAINS_FILE"
+    fi
 }
 
 # Aktif subdomainleri belirle
 identify_active_subdomains() {
     echo -e "\n${BLUE}[*] Aktif subdomainler belirleniyor...${NC}"
     
-    httpx -l "$SUBDOMAINS_FILE" -silent -o "$ACTIVE_SUBDOMAINS_FILE"
+    if [ ! -s "$SUBDOMAINS_FILE" ]; then
+        echo -e "${RED}[!] Subdomain dosyası bulunamadı veya boş!${NC}"
+        return 1
+    fi
     
-    local count=$(wc -l < "$ACTIVE_SUBDOMAINS_FILE")
+    httpx -l "$SUBDOMAINS_FILE" -silent -o "$ACTIVE_SUBDOMAINS_FILE" 2>/dev/null
+    
+    local count=$(wc -l < "$ACTIVE_SUBDOMAINS_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}[+] Toplam $count aktif subdomain bulundu.${NC}"
+    
+    if [ "$count" -eq 0 ]; then
+        echo -e "${YELLOW}[!] Aktif subdomain bulunamadı. Ana domain ile devam ediliyor...${NC}"
+        echo "https://$TARGET_DOMAIN" > "$ACTIVE_SUBDOMAINS_FILE"
+        echo "http://$TARGET_DOMAIN" >> "$ACTIVE_SUBDOMAINS_FILE"
+    fi
 }
 
 # URL toplama
 collect_urls() {
     echo -e "\n${BLUE}[*] URL'ler toplanıyor...${NC}"
     
-    echo -e "${YELLOW}[*] Urlfinder ile URL'ler toplanıyor...${NC}"
-    cat "$ACTIVE_SUBDOMAINS_FILE" | urlfinder -o "$OUTPUT_DIR/urlfinder_urls.txt"
-    
-    echo -e "${YELLOW}[*] Katana ile URL'ler toplanıyor...${NC}"
-    katana -list "$ACTIVE_SUBDOMAINS_FILE" -o "$OUTPUT_DIR/katana_urls.txt" -silent
-    
-    echo -e "${YELLOW}[*] Waybackurls ile URL'ler toplanıyor...${NC}"
-    cat "$ACTIVE_SUBDOMAINS_FILE" | waybackurls > "$OUTPUT_DIR/wayback_urls.txt"
-    
-    echo -e "${YELLOW}[*] GAU ile URL'ler toplanıyor...${NC}"
-    cat "$ACTIVE_SUBDOMAINS_FILE" | gau --threads 5 > "$OUTPUT_DIR/gau_urls.txt"
-    
-    echo -e "${YELLOW}[*] Gospider ile URL'ler toplanıyor...${NC}"
-    while read domain; do
-        gospider -s "$domain" -d 2 -c 5 -t 100 -o "$OUTPUT_DIR/gospider" > /dev/null 2>&1
-    done < "$ACTIVE_SUBDOMAINS_FILE"
-    
-    if [ -d "$OUTPUT_DIR/gospider" ]; then
-        grep -r -o 'https\?://[^[:space:]]\+' "$OUTPUT_DIR/gospider" | cut -d ':' -f2- > "$OUTPUT_DIR/gospider_urls.txt"
+    if [ ! -s "$ACTIVE_SUBDOMAINS_FILE" ]; then
+        echo -e "${RED}[!] Aktif subdomain dosyası bulunamadı veya boş!${NC}"
+        return 1
     fi
     
-    # Tüm URL'leri birleştir
-    cat "$OUTPUT_DIR/urlfinder_urls.txt" "$OUTPUT_DIR/katana_urls.txt" "$OUTPUT_DIR/wayback_urls.txt" "$OUTPUT_DIR/gau_urls.txt" "$OUTPUT_DIR/gospider_urls.txt" 2>/dev/null | sort -u > "$URLS_FILE"
+    # Temporary dosyalar
+    local temp_dir="$OUTPUT_DIR/temp"
+    mkdir -p "$temp_dir"
     
-    local count=$(wc -l < "$URLS_FILE")
+    echo -e "${YELLOW}[*] Katana ile URL'ler toplanıyor...${NC}"
+    if command -v katana &> /dev/null; then
+        katana -list "$ACTIVE_SUBDOMAINS_FILE" -o "$temp_dir/katana_urls.txt" -silent -d 2 -jc -kf -fx -ef woff,css,png,svg,jpg,woff2,jpeg,gif,svg 2>/dev/null || touch "$temp_dir/katana_urls.txt"
+    else
+        touch "$temp_dir/katana_urls.txt"
+    fi
+    
+    echo -e "${YELLOW}[*] Waybackurls ile URL'ler toplanıyor...${NC}"
+    if command -v waybackurls &> /dev/null; then
+        cat "$ACTIVE_SUBDOMAINS_FILE" | sed 's|https\?://||g' | waybackurls > "$temp_dir/wayback_urls.txt" 2>/dev/null || touch "$temp_dir/wayback_urls.txt"
+    else
+        touch "$temp_dir/wayback_urls.txt"
+    fi
+    
+    echo -e "${YELLOW}[*] GAU ile URL'ler toplanıyor...${NC}"
+    if command -v gau &> /dev/null; then
+        cat "$ACTIVE_SUBDOMAINS_FILE" | sed 's|https\?://||g' | gau --threads 5 --subs > "$temp_dir/gau_urls.txt" 2>/dev/null || touch "$temp_dir/gau_urls.txt"
+    else
+        touch "$temp_dir/gau_urls.txt"
+    fi
+    
+    echo -e "${YELLOW}[*] Gospider ile URL'ler toplanıyor...${NC}"
+    if command -v gospider &> /dev/null; then
+        while read -r domain; do
+            gospider -s "$domain" -d 2 -c 5 -t 20 --other-source --include-subs 2>/dev/null | grep -Eo 'https?://[^[:space:]]+' >> "$temp_dir/gospider_urls.txt" 2>/dev/null || true
+        done < "$ACTIVE_SUBDOMAINS_FILE"
+    fi
+    
+    # Boş dosya oluştur eğer yoksa
+    touch "$temp_dir/gospider_urls.txt"
+    
+    # Tüm URL'leri birleştir ve temizle
+    cat "$temp_dir/katana_urls.txt" "$temp_dir/wayback_urls.txt" "$temp_dir/gau_urls.txt" "$temp_dir/gospider_urls.txt" 2>/dev/null | \
+    grep -E '^https?://' | \
+    grep -v -E '\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|pdf|doc|docx|zip|tar|gz)(\?|$)' | \
+    sort -u > "$URLS_FILE"
+    
+    # Temp klasörünü temizle
+    rm -rf "$temp_dir"
+    
+    local count=$(wc -l < "$URLS_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}[+] Toplam $count benzersiz URL bulundu.${NC}"
 }
 
@@ -126,27 +189,39 @@ collect_urls() {
 analyze_xss_endpoints() {
     echo -e "\n${BLUE}[*] XSS için potansiyel URL'ler analiz ediliyor...${NC}"
     
+    if [ ! -s "$URLS_FILE" ]; then
+        echo -e "${RED}[!] URL dosyası bulunamadı veya boş!${NC}"
+        touch "$XSS_ENDPOINTS" "$XSS_HIGH_RISK" "$XSS_PARAMS"
+        return 1
+    fi
+    
     # XSS için potansiyel endpointler - Genişletilmiş parametre listesi
-    grep -i -E '(search=|q=|query=|text=|name=|message=|content=|comment=|input=|value=|keyword=|data=|redirect=|url=|view=|callback=|return_url=|returnurl=|return=|site=|html=|val=|title=|description=|file=|file_name=|filename=|file_contents=|preview=|id=|item=|page_id=|month=|year=|view_id=|email=|type=|username=|user=|term=|profile=|code=|pre=|post=|subject=|token=|tag=|body=|redir=|referrer=|return_to=|path=|continue=|template=|section=|s=|lang=|sort=|dir=|start=|end=|page=|result=|style=|target=|window=|state=|cat=|src=|feed=|mode=)' "$URLS_FILE" > "$XSS_ENDPOINTS"
+    grep -i -E '(\?|&)(search|q|query|text|name|message|content|comment|input|value|keyword|data|redirect|url|view|callback|return_url|returnurl|return|site|html|val|title|description|file|file_name|filename|file_contents|preview|id|item|page_id|month|year|view_id|email|type|username|user|term|profile|code|pre|post|subject|token|tag|body|redir|referrer|return_to|path|continue|template|section|s|lang|sort|dir|start|end|page|result|style|target|window|state|cat|src|feed|mode)=' "$URLS_FILE" > "$XSS_ENDPOINTS" 2>/dev/null || touch "$XSS_ENDPOINTS"
     
     # Yüksek riskli parametreler için özel filtreleme
-    grep -i -E '(html=|innerhtml=|script=|code=|template=|eval=|markup=|style=|value=|src=|href=|action=|onload=|onerror=|onclick=|onmouseover=)' "$XSS_ENDPOINTS" > "$XSS_HIGH_RISK"
-    
-    # Parametreleri çıkar ve benzersiz olanları bul
-    grep -o -E '[a-zA-Z0-9_-]+=([^&]*)' "$XSS_ENDPOINTS" | cut -d '=' -f 1 | sort -u > "$XSS_PARAMS"
+    if [ -s "$XSS_ENDPOINTS" ]; then
+        grep -i -E '(\?|&)(html|innerhtml|script|code|template|eval|markup|style|value|src|href|action|onload|onerror|onclick|onmouseover)=' "$XSS_ENDPOINTS" > "$XSS_HIGH_RISK" 2>/dev/null || touch "$XSS_HIGH_RISK"
+        
+        # Parametreleri çıkar ve benzersiz olanları bul
+        grep -o -E '(\?|&)[a-zA-Z0-9_-]+=' "$XSS_ENDPOINTS" | sed 's/[?&]//g' | sed 's/=//g' | sort -u > "$XSS_PARAMS" 2>/dev/null || touch "$XSS_PARAMS"
+    else
+        touch "$XSS_HIGH_RISK" "$XSS_PARAMS"
+    fi
     
     # İstatistikleri yazdır
-    local total_xss=$(wc -l < "$XSS_ENDPOINTS")
-    local high_risk=$(wc -l < "$XSS_HIGH_RISK")
-    local unique_params=$(wc -l < "$XSS_PARAMS")
+    local total_xss=$(wc -l < "$XSS_ENDPOINTS" 2>/dev/null || echo "0")
+    local high_risk=$(wc -l < "$XSS_HIGH_RISK" 2>/dev/null || echo "0")
+    local unique_params=$(wc -l < "$XSS_PARAMS" 2>/dev/null || echo "0")
     
     echo -e "${GREEN}[+] XSS için: $total_xss potansiyel endpoint bulundu${NC}"
     echo -e "${YELLOW}[+] Yüksek riskli: $high_risk endpoint${NC}"
     echo -e "${BLUE}[+] Benzersiz parametre sayısı: $unique_params${NC}"
     
     # En sık kullanılan parametreleri göster
-    echo -e "\n${PURPLE}[*] En sık kullanılan 10 parametre:${NC}"
-    grep -o -E '[a-zA-Z0-9_-]+=([^&]*)' "$XSS_ENDPOINTS" | cut -d '=' -f 1 | sort | uniq -c | sort -nr | head -10
+    if [ -s "$XSS_ENDPOINTS" ]; then
+        echo -e "\n${PURPLE}[*] En sık kullanılan 10 parametre:${NC}"
+        grep -o -E '(\?|&)[a-zA-Z0-9_-]+=' "$XSS_ENDPOINTS" | sed 's/[?&]//g' | sed 's/=//g' | sort | uniq -c | sort -nr | head -10 2>/dev/null || echo "Parametre bulunamadı"
+    fi
 }
 
 # XSS Raporu oluştur
@@ -197,25 +272,26 @@ generate_xss_report() {
             <div class="stats">
                 <div class="stat-card">
                     <h3>Subdomain</h3>
-                    <p>Toplam: $(wc -l < "$SUBDOMAINS_FILE")</p>
-                    <p>Aktif: $(wc -l < "$ACTIVE_SUBDOMAINS_FILE")</p>
+                    <p>Toplam: $(wc -l < "$SUBDOMAINS_FILE" 2>/dev/null || echo "0")</p>
+                    <p>Aktif: $(wc -l < "$ACTIVE_SUBDOMAINS_FILE" 2>/dev/null || echo "0")</p>
                 </div>
                 <div class="stat-card">
                     <h3>URL'ler</h3>
-                    <p>Toplam URL'ler: $(wc -l < "$URLS_FILE")</p>
-                    <p>XSS için Potansiyel: $(wc -l < "$XSS_ENDPOINTS")</p>
+                    <p>Toplam URL'ler: $(wc -l < "$URLS_FILE" 2>/dev/null || echo "0")</p>
+                    <p>XSS için Potansiyel: $(wc -l < "$XSS_ENDPOINTS" 2>/dev/null || echo "0")</p>
                 </div>
                 <div class="stat-card">
                     <h3>XSS Risk Analizi</h3>
-                    <p>Yüksek Risk: $(wc -l < "$XSS_HIGH_RISK")</p>
-                    <p>Benzersiz Parametreler: $(wc -l < "$XSS_PARAMS")</p>
+                    <p>Yüksek Risk: $(wc -l < "$XSS_HIGH_RISK" 2>/dev/null || echo "0")</p>
+                    <p>Benzersiz Parametreler: $(wc -l < "$XSS_PARAMS" 2>/dev/null || echo "0")</p>
                 </div>
             </div>
         </div>
 EOF
 
     # Subdomain listesi ekle
-    cat >> "$report_file" << EOF
+    if [ -s "$ACTIVE_SUBDOMAINS_FILE" ]; then
+        cat >> "$report_file" << EOF
         <div class="section">
             <h2>Aktif Subdomainler</h2>
             <table>
@@ -225,19 +301,21 @@ EOF
                 </tr>
 EOF
 
-    count=1
-    while read -r subdomain; do
-        echo "<tr><td>$count</td><td>$subdomain</td></tr>" >> "$report_file"
-        count=$((count + 1))
-    done < "$ACTIVE_SUBDOMAINS_FILE"
+        count=1
+        while read -r subdomain; do
+            echo "<tr><td>$count</td><td>$subdomain</td></tr>" >> "$report_file"
+            count=$((count + 1))
+        done < "$ACTIVE_SUBDOMAINS_FILE"
 
-    cat >> "$report_file" << EOF
+        cat >> "$report_file" << EOF
             </table>
         </div>
 EOF
+    fi
 
     # Yüksek Riskli XSS Endpointleri
-    cat >> "$report_file" << EOF
+    if [ -s "$XSS_HIGH_RISK" ]; then
+        cat >> "$report_file" << EOF
         <div class="section">
             <h2>Yüksek Riskli XSS Endpointleri</h2>
             <p>Aşağıdaki URL'ler, XSS saldırılarına karşı yüksek risk taşıyan parametreler içermektedir.</p>
@@ -249,19 +327,21 @@ EOF
                 </tr>
 EOF
 
-    count=1
-    while read -r url; do
-        echo "<tr><td>$count</td><td class=\"url-cell\">$url</td><td><span class=\"badge high-risk\">Yüksek</span></td></tr>" >> "$report_file"
-        count=$((count + 1))
-    done < "$XSS_HIGH_RISK"
+        count=1
+        while read -r url; do
+            echo "<tr><td>$count</td><td class=\"url-cell\">$url</td><td><span class=\"badge high-risk\">Yüksek</span></td></tr>" >> "$report_file"
+            count=$((count + 1))
+        done < "$XSS_HIGH_RISK"
 
-    cat >> "$report_file" << EOF
+        cat >> "$report_file" << EOF
             </table>
         </div>
 EOF
+    fi
     
     # Tüm XSS Endpointleri
-    cat >> "$report_file" << EOF
+    if [ -s "$XSS_ENDPOINTS" ]; then
+        cat >> "$report_file" << EOF
         <div class="section">
             <h2>Tüm Potansiyel XSS Endpointleri</h2>
             <p>Bu URL'ler, XSS saldırılarına karşı test edilmesi gereken parametreler içermektedir.</p>
@@ -272,16 +352,21 @@ EOF
                 </tr>
 EOF
 
-    count=1
-    while read -r url; do
-        echo "<tr><td>$count</td><td class=\"url-cell\">$url</td></tr>" >> "$report_file"
-        count=$((count + 1))
-    done < "$XSS_ENDPOINTS"
+        count=1
+        while read -r url; do
+            echo "<tr><td>$count</td><td class=\"url-cell\">$url</td></tr>" >> "$report_file"
+            count=$((count + 1))
+        done < "$XSS_ENDPOINTS"
 
-    cat >> "$report_file" << EOF
+        cat >> "$report_file" << EOF
             </table>
         </div>
+EOF
+    fi
         
+    # Parametreler listesi
+    if [ -s "$XSS_PARAMS" ]; then
+        cat >> "$report_file" << EOF
         <div class="section">
             <h2>Benzersiz XSS Parametreleri</h2>
             <p>Aşağıdaki parametreler, XSS saldırılarına karşı test edilmelidir.</p>
@@ -292,16 +377,19 @@ EOF
                 </tr>
 EOF
 
-    count=1
-    while read -r param; do
-        echo "<tr><td>$count</td><td>$param</td></tr>" >> "$report_file"
-        count=$((count + 1))
-    done < "$XSS_PARAMS"
+        count=1
+        while read -r param; do
+            echo "<tr><td>$count</td><td>$param</td></tr>" >> "$report_file"
+            count=$((count + 1))
+        done < "$XSS_PARAMS"
 
-    cat >> "$report_file" << EOF
+        cat >> "$report_file" << EOF
             </table>
         </div>
-        
+EOF
+    fi
+
+    cat >> "$report_file" << EOF
         <div class="section">
             <h2>XSS Test Önerileri</h2>
             <ol>
@@ -334,8 +422,9 @@ EOF
 # Ana akış
 function main {
     echo -e "${BLUE}[*] $TARGET_DOMAIN için XSS odaklı recon başlatılıyor...${NC}"
-    echo -e "${RED}[*] $TARGET_DOMAIN "Tarama biraz sürebilir, bu arada kahvenizi alıp gelebilirsiniz."${NC}"
+    echo -e "${RED}[*] Tarama biraz sürebilir, bu arada kahvenizi alıp gelebilirsiniz.${NC}"
     
+    check_tools
     discover_subdomains
     identify_active_subdomains
     collect_urls
