@@ -67,19 +67,19 @@ FOXss Recon, web uygulamalarında XSS (Cross-Site Scripting) güvenlik açıklar
 
 
 ##  🔧 Ana Hatalar ve Düzeltmeler:
-- 1. Tool Control Fonksiyonu Eklendi
+-  Tool Control Fonksiyonu Eklendi
 
-- 2. Error Handling İyileştirildi
+-  Error Handling İyileştirildi
 
-- 3. Gospider Çıktı Formatı Düzeltildi
+-  Gospider Çıktı Formatı Düzeltildi
 
-- 4. File Handling İyileştirildi
+-  File Handling İyileştirildi
 
-- 5. Regex Pattern'ler Düzeltildi
+-  Regex Pattern'ler Düzeltildi
 
-- 6. Performance İyileştirmeleri
+-  Performance İyileştirmeleri
 
-- 7. Hata Durumu Yönetimi
+-  Hata Durumu Yönetimi
 
 
 
