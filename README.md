@@ -66,7 +66,7 @@ FOXss Recon, web uygulamalarında XSS (Cross-Site Scripting) güvenlik açıklar
 - Bu araç sadece keşif amaçlıdır ve yasal olmayan kullanım yasaktır. FOXss Recon, yalnızca yetkili ve izinli sistemlerde kullanılmalıdır.
 
 
-##  🔧 Ana Hatalar ve Düzeltmeler:
+##  🔧 Ana Hatalar ve Düzeltmeler(30/08/2025):
 -  Tool Control Fonksiyonu Eklendi
 
 -  Error Handling İyileştirildi
