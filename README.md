@@ -58,7 +58,7 @@ FOXss Recon, web uygulamalarında XSS (Cross-Site Scripting) güvenlik açıklar
 
 - Yüksek Riskli XSS Endpointleri: recon_<domain>/xss_high_risk.txt
 
-- HTML Raporu: recon_<domain>/xss_report.html
+ HTML Raporu: recon_<domain>/xss_report.html
 
   
 ##  💡 Not
@@ -67,46 +67,20 @@ FOXss Recon, web uygulamalarında XSS (Cross-Site Scripting) güvenlik açıklar
 
 
 ##  🔧 Ana Hatalar ve Düzeltmeler:
-1. Tool Control Fonksiyonu Eklendi
+- 1. Tool Control Fonksiyonu Eklendi
 
-check_tools() fonksiyonu eklendi
-Missing tools array'i düzgün tanımlandı
-Go tool kurulum önerileri eklendi
+- 2. Error Handling İyileştirildi
+
+- 3. Gospider Çıktı Formatı Düzeltildi
+
+- 4. File Handling İyileştirildi
+
+- 5. Regex Pattern'ler Düzeltildi
+
+- 6. Performance İyileştirmeleri
+
+- 7. Hata Durumu Yönetimi
 
 
-
-2. Error Handling İyileştirildi
-
-Tüm komutlarda 2>/dev/null eklendi
-Boş dosya kontrolleri eklendi
-|| touch fallback'leri eklendi
-
-2. Gospider Çıktı Formatı Düzeltildi
-
-Gospider çıktısından URL'ler doğru şekilde extract ediliyor
-Grep pattern düzeltildi
-
-4. File Handling İyileştirildi
-
-Dosya varlık kontrolleri eklendi (-s flag ile)
-Boş dosyalar için fallback'ler
-Temporary directory kullanımı
-
-5. Regex Pattern'ler Düzeltildi
-
-XSS parameter detection için daha iyi regex
-URL filtering için gelişmiş pattern'ler
-
-6. Performance İyileştirmeleri
-
-Gospider thread sayısı düşürüldü (20)
-Gereksiz dosya türleri filtrelendi
-Temp dosyalar otomatik temizleniyor
-
-7. Hata Durumu Yönetimi
-
-Eğer subdomain bulunamazsa ana domain kullanılıyor
-Eğer aktif subdomain yoksa http/https ile deneniyor
-Empty file kontrolları her yerde
 
   
