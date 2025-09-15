@@ -1,9 +1,6 @@
 #!/bin/bash
 
-# XSS Hunter - Recon Automation Tool
-# Bu araç subdomain keşfi, aktif doğrulama ve XSS odaklı URL toplama süreçlerini otomatize eder
-
-# Renk tanımlamaları
+# FOXss v1
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
@@ -11,7 +8,7 @@ BLUE='\033[0;34m'
 PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
-# Banner
+
 echo -e "${RED}
 
 
@@ -30,14 +27,14 @@ echo -e "${YELLOW}FOXss Recon${NC}"
 echo -e "${BLUE}Version: 1.0${NC}\n"
 echo -e "${RED}https://www.github.com/caneraktas1337${NC}\n"
 
-# Kullanım kontrol
+
 if [ $# -ne 1 ]; then
     echo -e "${RED}Kullanım: $0 <domain>${NC}"
     echo -e "${YELLOW}Örnek: $0 hedefsite.com${NC}"
     exit 1
 fi
 
-# Parametreler
+
 TARGET_DOMAIN=$1
 CURRENT_DATE=$(date +"%Y-%m-%d")
 OUTPUT_DIR="recon_$TARGET_DOMAIN"
@@ -48,10 +45,10 @@ XSS_ENDPOINTS="$OUTPUT_DIR/xss_endpoints.txt"
 XSS_PARAMS="$OUTPUT_DIR/xss_parameters.txt"
 XSS_HIGH_RISK="$OUTPUT_DIR/xss_high_risk.txt"
 
-# Çıktı dizini oluştur
+
 mkdir -p "$OUTPUT_DIR"
 
-# Gerekli araçları kontrol et
+
 check_tools() {
     echo -e "${BLUE}[*] Gerekli araçlar kontrol ediliyor...${NC}"
     
@@ -84,7 +81,7 @@ check_tools() {
     echo -e "${GREEN}[+] Tüm gerekli araçlar mevcut!${NC}"
 }
 
-# Subdomain keşfi
+
 discover_subdomains() {
     echo -e "\n${BLUE}[*] Subdomain keşfi başlatılıyor...${NC}"
     
@@ -107,7 +104,7 @@ discover_subdomains() {
     fi
 }
 
-# Aktif subdomainleri belirle
+
 identify_active_subdomains() {
     echo -e "\n${BLUE}[*] Aktif subdomainler belirleniyor...${NC}"
     
@@ -128,7 +125,7 @@ identify_active_subdomains() {
     fi
 }
 
-# URL toplama
+
 collect_urls() {
     echo -e "\n${BLUE}[*] URL'ler toplanıyor...${NC}"
     
@@ -137,7 +134,7 @@ collect_urls() {
         return 1
     fi
     
-    # Temporary dosyalar
+    
     local temp_dir="$OUTPUT_DIR/temp"
     mkdir -p "$temp_dir"
     
@@ -169,23 +166,23 @@ collect_urls() {
         done < "$ACTIVE_SUBDOMAINS_FILE"
     fi
     
-    # Boş dosya oluştur eğer yoksa
+    
     touch "$temp_dir/gospider_urls.txt"
     
-    # Tüm URL'leri birleştir ve temizle
+    
     cat "$temp_dir/katana_urls.txt" "$temp_dir/wayback_urls.txt" "$temp_dir/gau_urls.txt" "$temp_dir/gospider_urls.txt" 2>/dev/null | \
     grep -E '^https?://' | \
     grep -v -E '\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|pdf|doc|docx|zip|tar|gz)(\?|$)' | \
     sort -u > "$URLS_FILE"
     
-    # Temp klasörünü temizle
+    
     rm -rf "$temp_dir"
     
     local count=$(wc -l < "$URLS_FILE" 2>/dev/null || echo "0")
     echo -e "${GREEN}[+] Toplam $count benzersiz URL bulundu.${NC}"
 }
 
-# XSS endpointlerini analiz et
+
 analyze_xss_endpoints() {
     echo -e "\n${BLUE}[*] XSS için potansiyel URL'ler analiz ediliyor...${NC}"
     
@@ -195,20 +192,20 @@ analyze_xss_endpoints() {
         return 1
     fi
     
-    # XSS için potansiyel endpointler - Genişletilmiş parametre listesi
+    
     grep -i -E '(\?|&)(search|q|query|text|name|message|content|comment|input|value|keyword|data|redirect|url|view|callback|return_url|returnurl|return|site|html|val|title|description|file|file_name|filename|file_contents|preview|id|item|page_id|month|year|view_id|email|type|username|user|term|profile|code|pre|post|subject|token|tag|body|redir|referrer|return_to|path|continue|template|section|s|lang|sort|dir|start|end|page|result|style|target|window|state|cat|src|feed|mode)=' "$URLS_FILE" > "$XSS_ENDPOINTS" 2>/dev/null || touch "$XSS_ENDPOINTS"
     
-    # Yüksek riskli parametreler için özel filtreleme
+    
     if [ -s "$XSS_ENDPOINTS" ]; then
         grep -i -E '(\?|&)(html|innerhtml|script|code|template|eval|markup|style|value|src|href|action|onload|onerror|onclick|onmouseover)=' "$XSS_ENDPOINTS" > "$XSS_HIGH_RISK" 2>/dev/null || touch "$XSS_HIGH_RISK"
         
-        # Parametreleri çıkar ve benzersiz olanları bul
+        
         grep -o -E '(\?|&)[a-zA-Z0-9_-]+=' "$XSS_ENDPOINTS" | sed 's/[?&]//g' | sed 's/=//g' | sort -u > "$XSS_PARAMS" 2>/dev/null || touch "$XSS_PARAMS"
     else
         touch "$XSS_HIGH_RISK" "$XSS_PARAMS"
     fi
     
-    # İstatistikleri yazdır
+    
     local total_xss=$(wc -l < "$XSS_ENDPOINTS" 2>/dev/null || echo "0")
     local high_risk=$(wc -l < "$XSS_HIGH_RISK" 2>/dev/null || echo "0")
     local unique_params=$(wc -l < "$XSS_PARAMS" 2>/dev/null || echo "0")
@@ -217,14 +214,14 @@ analyze_xss_endpoints() {
     echo -e "${YELLOW}[+] Yüksek riskli: $high_risk endpoint${NC}"
     echo -e "${BLUE}[+] Benzersiz parametre sayısı: $unique_params${NC}"
     
-    # En sık kullanılan parametreleri göster
+    
     if [ -s "$XSS_ENDPOINTS" ]; then
         echo -e "\n${PURPLE}[*] En sık kullanılan 10 parametre:${NC}"
         grep -o -E '(\?|&)[a-zA-Z0-9_-]+=' "$XSS_ENDPOINTS" | sed 's/[?&]//g' | sed 's/=//g' | sort | uniq -c | sort -nr | head -10 2>/dev/null || echo "Parametre bulunamadı"
     fi
 }
 
-# XSS Raporu oluştur
+
 generate_xss_report() {
     echo -e "\n${BLUE}[*] XSS Raporu oluşturuluyor...${NC}"
     
@@ -289,7 +286,7 @@ generate_xss_report() {
         </div>
 EOF
 
-    # Subdomain listesi ekle
+    
     if [ -s "$ACTIVE_SUBDOMAINS_FILE" ]; then
         cat >> "$report_file" << EOF
         <div class="section">
@@ -313,7 +310,7 @@ EOF
 EOF
     fi
 
-    # Yüksek Riskli XSS Endpointleri
+    
     if [ -s "$XSS_HIGH_RISK" ]; then
         cat >> "$report_file" << EOF
         <div class="section">
@@ -339,7 +336,7 @@ EOF
 EOF
     fi
     
-    # Tüm XSS Endpointleri
+    
     if [ -s "$XSS_ENDPOINTS" ]; then
         cat >> "$report_file" << EOF
         <div class="section">
@@ -364,7 +361,7 @@ EOF
 EOF
     fi
         
-    # Parametreler listesi
+    
     if [ -s "$XSS_PARAMS" ]; then
         cat >> "$report_file" << EOF
         <div class="section">
@@ -419,7 +416,7 @@ EOF
     echo -e "${GREEN}[+] XSS Raporu oluşturuldu: $report_file${NC}"
 }
 
-# Ana akış
+
 function main {
     echo -e "${BLUE}[*] $TARGET_DOMAIN için XSS odaklı recon başlatılıyor...${NC}"
     echo -e "${RED}[*] Tarama biraz sürebilir, bu arada kahvenizi alıp gelebilirsiniz.${NC}"
@@ -436,5 +433,5 @@ function main {
     echo -e "${PURPLE}[*] XSS raporu: $OUTPUT_DIR/xss_report.html${NC}"
 }
 
-# Programı başlat
+
 main
