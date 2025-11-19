@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # FOxss Recon v4.5
-# Futuristic XSS Recon & Analysis Framework
+# XSS Recon Framework
 # Author: Caner Aktas
 #
 
@@ -28,7 +28,7 @@ banner() {
                                               FOxss Recon
 ${NC}"
   echo -e "${YELLOW}FOxss Recon -  XSS Recon Framework${NC}"
-  echo -e "${BLUE}Version: 4.5 (Deep Smart XSS Recon)${NC}\n"
+  echo -e "${BLUE}Version: 4.5 ${NC}\n"
 }
 
 if [ $# -ne 1 ]; then
