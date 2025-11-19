@@ -1,5 +1,5 @@
-# 🦊 FOxss Recon v4.5  
-### Futuristic XSS Recon & Analysis Framework  
+# 🦊 FOXss Recon v4.5  
+### XSS Recon Framework  
 
 FOxss Recon is an advanced, fully-automated XSS reconnaissance framework designed for bug bounty hunters, penetration testers and security researchers.
 
@@ -128,7 +128,7 @@ Open `xss_report.html` in your browser to see the neon dashboard.
 
 ---
 
-## 🦊 Why FOxss Recon?
+## 🦊 Why FOXss Recon?
 
 - Deeper analysis with fewer requests  
 - Diff-based scanning: focuses only on new attack surface  
@@ -148,7 +148,7 @@ You can:
 - Improve hidden parameter wordlists
 - Integrate new sources (e.g. more JS crawlers)
 
-If you find FOxss useful, please:
+If you find FOXss useful, please:
 
 > ⭐ Star the repo on GitHub — it helps a lot!
 
