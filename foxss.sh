@@ -27,7 +27,7 @@ banner() {
  \_|    \___/\/   \/___/___/      \_| \_\___|\___\___/|_| |_|
                                               FOxss Recon
 ${NC}"
-  echo -e "${YELLOW}FOxss Recon - Futuristic Neon XSS Recon Framework${NC}"
+  echo -e "${YELLOW}FOxss Recon -  XSS Recon Framework${NC}"
   echo -e "${BLUE}Version: 4.5 (Deep Smart XSS Recon)${NC}\n"
 }
 
